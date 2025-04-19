@@ -1,4 +1,4 @@
-// the package installed npm i dotenv
+// the package installed npm i dotenv, npm i bcryptjs
 
 require("dotenv").config();
 
@@ -14,6 +14,7 @@ app.use(express.json());
 
 const HTTP_PORT = process.env.PORT || 8080;
 
+// Here will display the info of vehicles from data-service.js
 app.get("/api/vehicles", (req,res)=>{
     dataService.getAllVehicles().then((data)=>{
         res.json(data);
@@ -44,14 +45,16 @@ app.post("/api/register", (req, res) => {
         });
 });
 
+// This method is to request and display the name+password of user but,
+//because the password in checkUser is bcrypt/hashed, we have to use this procedure
 app.post('/api/login', (req, res) => {
-    userService
-      .checkUser(req.body)
+    userService.checkUser(req.body)
       .then((user) => {
-        res.json({ message: 'login successful' });
+        res.json({ message: 'user is logged in successful' });
+        console.log(`user: ${user.userName}, logged in successfully.`)
       })
       .catch((msg) => {
-        res.status(422).json({ message: msg });
+        res.status(422).json({ message: msg }); 
       });
   });
 

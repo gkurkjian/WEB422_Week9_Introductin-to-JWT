@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 let mongoDBConnectionString = process.env.MONGO_DB_CONNECTION;
 
@@ -48,17 +49,25 @@ module.exports.registerUser = function (userData) {
             reject("Passwords do not match");
         } else {
 
-            let newUser = new User(userData);
+            bcrypt.hash(userData.password, 10).then(hashed => {
 
-            newUser.save().then(() => {
-                resolve("User " + userData.userName + " successfully registered");
-            }).catch(err => {
-                if (err.code == 11000) {
-                    reject("User Name already taken");
-                } else {
-                    reject("There was an error creating the user: " + err);
-                }
-            });
+                userData.password = hashed;
+                let newUser = new User(userData);
+
+                newUser.save().then(() => {
+                    resolve("User " + userData.userName + " successfully registered");
+                }).catch(err => {
+                    if (err.code == 11000) {
+                        reject("User Name already taken");
+                    } else {
+                        reject("There was an error creating the user: " + err);
+                    }
+                });
+
+            })
+            .catch(err => {
+                reject(err);
+            }); 
         }
     });
 };
@@ -74,12 +83,14 @@ module.exports.checkUser = function (userData) {
                 if (users.length == 0) {
                     reject("Unable to find user " + userData.userName);
                 } else {
-                    if (userData.password == users[0].password) {
-                        resolve(users[0]);
-                    } else {
-                        reject("Incorrect password for user " + userData.userName);
-                    }
 
+                    bcrypt.compare(userData.password, users[0].password).then(match =>{
+                        if(match){
+                            resolve(users[0]);
+                        } else {
+                            reject("Incorrect password for user " + userData.userName);
+                        }
+                    })
                 }
             }).catch((err) => {
                 reject("Unable to find user " + userData.userName);

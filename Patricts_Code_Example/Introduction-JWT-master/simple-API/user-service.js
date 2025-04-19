@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-let mongoDBConnectionString = "Enter your MongoDB Connection String Here";
+let mongoDBConnectionString = process.env.MONGO_DB_CONNECTION;
 
 let Schema = mongoose.Schema;
 
@@ -28,6 +28,16 @@ module.exports.connect = function () {
             User = db.model("users", userSchema);
             resolve();
         });
+    });
+};
+
+// This function I created to Check the users exists in DataBase
+module.exports.getAllUsers = function () {
+    return new Promise((resolve, reject) => {
+        User.find({ userName: {$exists: true }})
+        .exec()
+        .then(users => resolve(users))
+        .catch(err => reject(err));
     });
 };
 

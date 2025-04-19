@@ -1,10 +1,16 @@
+// the package installed npm i dotenv
+
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
-const dataService = require("./data-service.js");
-const userService = require("./user-service.js");
-const app = express();
 
+const userService = require("./user-service.js");
+const dataService = require("./data-service.js");
+
+const app = express();
 app.use(cors());
+app.use(express.json());
 
 const HTTP_PORT = process.env.PORT || 8080;
 
@@ -16,10 +22,37 @@ app.get("/api/vehicles", (req,res)=>{
     });
 });
 
+// This function I created to Check the users exists in DataBase
+app.get("/api/users", (req,res) => {
+    userService.getAllUsers()
+    .then(users => {
+        res.json(users);
+    })
+    .catch(err => {
+        res.status(500).json({ message: "Unable to fetch users." });
+    })
+})
+
+app.post("/api/register", (req, res) => {
+    userService.registerUser(req.body)
+        .then(msg => {
+            res.json({ message: msg });
+        })
+        .catch(err => {
+            console.error("Register error:", err);
+            res.status(422).json({ message: err });
+        });
+});
+
 app.use((req, res) => {
     res.status(404).end();
 });
 
-app.listen(HTTP_PORT, ()=>{
+userService.connect().then(() => {
+    app.listen(HTTP_PORT, ()=>{
     console.log("App listening on: " + HTTP_PORT);
 });
+}).catch(err=>{
+    console.log(err);
+})
+
